@@ -1,0 +1,83 @@
+---
+- hosts: localhost
+  remote_user: root
+  tasks:
+  - name: Add repository - EPEL ( for Grafana )
+    yum_repository:
+      name: epel
+      description: EPEL YUM repo
+      baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+  - name: Install Collectd - Network ( for Grafana )
+    yum:
+      name: collectd
+      state: latest
+  - copy:
+      src: config/collectd.conf
+      dest: /etc/collectd.conf
+      owner: root
+      group: root
+      mode: 0644
+  - name: Add repository - InfluxDB ( for Grafana )
+    yum_repository:
+      name: InfluxDBRepository
+      description: influxDB REPO
+      baseurl: https://repos.influxdata.com/centos/\$releasever/\$basearch/stable
+      gpgkey: https://repos.influxdata.com/influxdb.key
+      gpgcheck: yes
+  - name: Install InfluxDB - DB ( for Grafana )
+    yum:
+      name: influxdb
+      state: latest
+  - copy:
+      src: config/influxdb.conf
+      dest: /etc/influxdb/influxdb.conf
+      owner: root
+      group: root
+      mode: 0644
+  - name: Start service collectd
+    service:
+      name: collectd
+      state: started
+  - name: Start service InfluxDB 
+    service:
+      name: influxdb
+      state: started
+  - name: Enable collectd service
+    service:
+      name: collectd
+      enabled: yes
+  - name: Enable influxdb service
+    service:
+      name: influxdb
+      enabled: yes
+  - copy:
+      src: config/grafana-server.service
+      dest: /etc/systemd/system/grafana-server.service
+      owner: root
+      group: root
+      mode: 0664
+  - name: Install Grafana - Network ( for Data Visualization )
+    yum_repository:
+      name: grafana
+      description: grafana
+      baseurl: https://packagecloud.io/grafana/stable/el/7/$basearch
+      gpgkey: https://packagecloud.io/gpg.key https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
+      gpgcheck: yes
+  - name: Install Grafana - Network ( for Data Visualization )
+    yum:
+      name: grafana
+      state: latest
+  - copy:
+      src: config/grafana.ini
+      dest: /etc/grafana/grafana.ini
+      owner: root
+      group: root
+      mode: 0664
+  - name: Start Grafana service
+    service:
+      name: grafana-server
+      state: started
+  - name: Enable Grafana Server
+    service:
+      name: grafana-server
+      enabled: yes
